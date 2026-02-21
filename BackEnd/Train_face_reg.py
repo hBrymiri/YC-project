@@ -2,6 +2,9 @@ import cv2
 import mediapipe as mp
 import os
 from datetime import datetime
+import audioReg
+import shutil
+import numpy as np
 # Enrollment (add new person) settings
 from pathlib import Path                 # number of images to capture for angles
 ENROLL_INTERVAL_SEC = 0.25        # time between shots
@@ -53,6 +56,22 @@ class Face_reg: # Face recognition and unknown face capture
         print(f"\n[ENROLL] Look at camera and slowly turn your head in all directions{ENROLL_SHOTS} shots for{name}..\n")
         shots=0
         last=0
+        
+        def liten_for_known_voice(know_name):
+            r = sr.Recognizer()
+            with sr.Microphone() as source:
+                print(f"listening..")
+                audio = audioReg.Listen(source)
+                
+                try:
+                    text=r.recognize_google(audio).lower()
+                    print(f" confimed {name} is known")
+                    
+                    for names in known_names:
+                        if names.lower() in spoken:
+                            print(f"confirmed {name} is known")
+                            return name
+                
     
         
     
