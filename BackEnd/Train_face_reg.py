@@ -64,13 +64,15 @@ class Face_reg: # Face recognition and unknown face capture
                 audio = audioReg.Listen(source)
                 
                 try:
-                    text=r.recognize_google(audio).lower()
-                    print(f" confimed {name} is known")
+                    text = r.recognize_google(audio).lower()
+                    print(f"confirmed {know_name} is known")
                     
                     for names in known_names:
-                        if names.lower() in spoken:
-                            print(f"confirmed {name} is known")
-                            return name
+                        if names.lower() in text:
+                            print(f"confirmed {know_name} is known")
+                            return know_name
+                except Exception as e:
+                    print(f"Error recognizing voice: {e}")
                 
     
         
