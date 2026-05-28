@@ -1,3 +1,5 @@
+import subprocess
+
 import numpy as np
 from scipy.io import wavfile
 import os
@@ -109,3 +111,9 @@ if __name__ == "__main__":
         generate_audio_file(f"{base_path}unknown/person_{i}.wav", person_type="unknown")
     
     print("Audio generation complete!")
+    
+def dont_run_unless_done_testing(external_audio):
+       if external_audio == "connected":
+         subprocess.Popen(["python3","BackEnd/audioReg.py"])
+         subprocess.Popen(["python3", "SubDocu/audio.py"])
+    # when i get the mini camera working, i will test the audio recognition and then run the main program with the camera and audio together
