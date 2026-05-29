@@ -11,10 +11,27 @@
     
     <h1 class ="h1">Raven</h1>
 
-     <button class="camera">
+     <button class="camera" id="cameraBtn">
         Access Webcam
         
     </button>
+
+    <script>
+        document.getElementById('cameraBtn').addEventListener('click', async function() {
+            try {
+                const response = await fetch('/start-camera', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await response.json();
+                console.log(data.message);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    </script>
 
     <div class = "verified">
         <button class ="button1">Verified People</button>
