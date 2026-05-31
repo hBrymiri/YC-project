@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Captured Faces</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="page-header">
+        <h1 class="h1">New Captured Faces</h1>
+        <a class="nav-button" href="/">Back to Project</a>
+    </header>
+
+    <p class="subtitle">Review faces captured by the live camera. Approve a face to move it into the verified folder.</p>
+
+    <div id="userList" class="user-grid">
+        <div class="empty-state">Loading captured faces...</div>
+    </div>
+
+    <script>
+        async function loadNewFaces() {
+            const list = document.getElementById('userList');
+            list.innerHTML = '<div class="empty-state">Loading captured faces...</div>';
+            try {
+                const response = await fetch('/api/new-users');
+                const data = await response.json();
+                if (!data.items || data.items.length === 0) {
+                    list.innerHTML = '<div class="empty-state">No new faces were captured yet.</div>';
+                    return;
+                }
+                list.innerHTML = '';
+                data.items.forEach(filename => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card';
+                    card.innerHTML = `
+                        <img src="/images/unknown/${encodeURIComponent(filename)}" alt="${filename}">
+                        <div class="user-card-content">
+                            <div class="user-name">${filename}</div>
+                            <button class="approve-button" onclick="approveFace('${encodeURIComponent(filename)}')">Approve</button>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (error) {
+                list.innerHTML = `<div class="empty-state">Failed to load faces: ${error.message}</div>`;
+            }
+        }
+
+        async function approveFace(encodedFilename) {
+            const filename = decodeURIComponent(encodedFilename);
+            try {
+                const response = await fetch('/api/approve-user', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ filename })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    loadNewFaces();
+                } else {
+                    alert('Approve failed: ' + (result.error || 'unknown error'));
+                }
+            } catch (error) {
+                alert('Approve failed: ' + error.message);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadNewFaces);
+    </script>
+</body>
+</html>

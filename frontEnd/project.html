@@ -11,34 +11,52 @@
     
     <h1 class ="h1">Raven</h1>
 
-     <button class="camera" id="cameraBtn">
-        Access Webcam
-        
-    </button>
+    <div class="top-bar">
+        <button class="camera" id="cameraBtn">Access Webcam</button>
+        <a class="nav-button" href="/new-users">Review New Users</a>
+    </div>
 
     <script>
-        document.getElementById('cameraBtn').addEventListener('click', async function() {
+        async function startCamera() {
             try {
-                const response = await fetch('/start-camera', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
+                const response = await fetch('/start-camera', { method: 'POST' });
                 const data = await response.json();
                 console.log(data.message);
             } catch (error) {
                 console.error('Error:', error);
             }
-        });
+        }
+
+        async function loadVerifiedFaces() {
+            const container = document.getElementById('verifiedContent');
+            container.innerHTML = '<div class="empty-state">Loading verified faces...</div>';
+            try {
+                const response = await fetch('/api/verified-users');
+                const data = await response.json();
+                if (!data.items || data.items.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No verified faces yet.</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.items.forEach(filename => {
+                    const item = document.createElement('div');
+                    item.className = 'verified-item';
+                    item.innerHTML = `\n                        <img src="/images/verified/${encodeURIComponent(filename)}" alt="${filename}">\n                        <span>${filename}</span>\n                    `;
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Failed to load verified faces: ${error.message}</div>`;
+            }
+        }
+
+        document.getElementById('cameraBtn').addEventListener('click', startCamera);
+        window.addEventListener('DOMContentLoaded', loadVerifiedFaces);
     </script>
 
     <div class = "verified">
         <button class ="button1">Verified People</button>
-        <div class="content">
-            <a href="">A</a>
-            <a href="">B</a>
-            <a href="">C</a>
+        <div class="content" id="verifiedContent">
+            <div class="empty-state">Loading verified faces...</div>
         </div>
     </div>
 
