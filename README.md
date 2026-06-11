@@ -1,1 +1,1 @@
-# yc-project
+# YCproject
