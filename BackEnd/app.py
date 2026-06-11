@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 import subprocess
-
 #app.py connects the camera/input, the recognition logic, and the database, then runs the app.
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -74,3 +73,12 @@ def verified_image(filename):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+    
+@app.route("/camera",methods=["POST"]) # type: ignore
+def camera(Start_camera,Stop_camera):
+    action=request.form.get("cameraButton")
+    if action=="Stop Camera":
+      Stop_camera()
+    return "Camera Stopped"
+    return " No Action Takken"
+    

@@ -12,6 +12,9 @@ import numpy as np
 from insightface.app import FaceAnalysis
 from pathlib import Path
 
+from flask import request
+
+
 KNOWN_DIR = Path("SubDocu/KnownFolder")
 UNKNOWN_DIR = Path("SubDocu/UnknownFolder")
 
@@ -25,7 +28,6 @@ vid_taken=0
 print("SubDocu/KnownFolder:", KNOWN_DIR.resolve())
 print("SubDocu/UnknownFolder:", UNKNOWN_DIR.resolve())
 
-CAM_INDEX = 0
 FRAME_SCALE = 1.0  # set to 0.75 or 0.5 if you need speed
 
 # Cosine similarity threshold: higher = stricter
@@ -110,10 +112,6 @@ if not known_db:
 # ----------------------------
 # Webcam loop
 # ----------------------------
-cap = cv2.VideoCapture(CAM_INDEX)
-if not cap.isOpened():
-    raise RuntimeError("Could not open webcam.")
-
 last_unknown_saved_at = 0.0
 last_spoken_at = {}  # name -> time
 
@@ -240,8 +238,17 @@ def low_battery_check(battery_status):
     if battery_status <= "20%":
         print("Battery too low, camera is disabled.")
         return
+        
 
-    
+def camera_loop():
+ 
+ CAM_INDEX = 0
+     
+ cap = cv2.VideoCapture(CAM_INDEX)
+ if not cap.isOpened():
+    raise RuntimeError("Could not open webcam.")
+
+
 
 cap.release()
 cv2.destroyAllWindows()

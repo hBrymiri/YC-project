@@ -56,30 +56,46 @@ class Face_reg: # Face recognition and unknown face capture
         return len(self.detect_faces(image)) > 0
     
     def Add_unknown(self, image): # Capture and save unknown face
-        person_dir = UNKNOWN_DIR  / "unknowns"
-        ensure_dir=(person_dir)
-        
-        print(f"\n[ENROLL] Look at camera and slowly turn your head in all directions{ENROLL_SHOTS} shots for{name}..\n")
-        shots=0
-        last=0
-        
-        def liten_for_known_voice(know_name):
+        person_dir = UNKNOWN_DIR / "unknowns"
+        os.makedirs(person_dir, exist_ok=True)
+
+        print(f"\n[ENROLL] Look at camera and slowly turn your head in all directions {ENROLL_SHOTS} shots for {name}..\n")
+        shots = 0
+        last = 0
+
+        def listen_for_known_voice(known_name):
             r = srepr.Recognizer() # type: ignore
             with sring.Microphone() as source:
-                print(f"listening..")
+                print("listening..")
                 audio = audioReg.Listen(source) # type: ignore
-                
+
                 try:
                     text = r.recognize_google(audio).lower()
-                    print(f"confirmed {know_name} is known")
-                    
-                    for names in know_name:
+                    for names in known_name:
                         if names.lower() in text:
-                            print(f"confirmed {know_name} is known")
-                            return know_name
+                            print(f"confirmed {known_name} is known")
+                            return known_name
                 except Exception as e:
                     print(f"Error recognizing voice: {e}")
-                
+
+    def load_unverified_users(self):
+        """Collect unverified user images for NewUsers.html.
+        Each entry includes a path and the file timestamp for display.
+        """
+        unverified = []
+        for image_path in UNKNOWN_DIR.glob('*'):
+            if image_path.is_file():
+                timestamp = datetime.fromtimestamp(image_path.stat().st_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                unverified.append({
+                    'path': str(image_path),
+                    'filename': image_path.name,
+                    'datetime': timestamp,
+                })
+        return unverified
+
+# Placeholder: NewUsers.html can use load_unverified_users() to render small pictures
+# for each unverified file and display the date/time alongside the image.
+
 @app.route('/api/approve-users', methods=['POST']) # type: ignore
 def api_approved_user():
     data = request.get_json() or {}

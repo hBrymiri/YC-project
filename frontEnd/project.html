@@ -12,7 +12,8 @@
     <h1 class ="h1">Raven</h1>
 
     <div class="top-bar">
-        <button class="nav-button start-camera" type="button">Start Camera</button>
+        <button id="startCameraBtn" class="nav-button" type="button">Start Camera</button>
+        <button id="stopCameraBtn" class="nav-button" type="button" style="display:none;">Stop Camera</button>
         <a class="nav-button" href="/new-users">Review New Users</a>
     </div>
 
@@ -31,15 +32,21 @@
                 const data = await response.json();
                 console.log('Backend response:', data.message);
                 document.getElementById('cameraStatus').textContent = data.message;
+                document.getElementById('stopCameraBtn').style.display = 'inline-block';
+                document.getElementById('startCameraBtn').disabled = true;
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('cameraStatus').textContent = `Camera error: ${error.message}`;
             }
         }
 
-        document.querySelectorAll('.start-camera').forEach(el => {
-            el.addEventListener('click', startCamera);
-        });
+        function stopCamera() {
+            document.getElementById('cameraStatus').textContent = 'Camera stopped';
+            document.getElementById('stopCameraBtn').style.display = 'none';
+        }
+
+        document.getElementById('startCameraBtn').addEventListener('click', startCamera);
+        document.getElementById('stopCameraBtn').addEventListener('click', stopCamera);
 
         async function loadVerifiedFaces() {
             const container = document.getElementById('verifiedContent');
