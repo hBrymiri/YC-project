@@ -3,47 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Captured Faces</title>
+    <title>Review New Users - Raven</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header class="page-header">
-        <h1 class="h1">New Captured Faces</h1>
-        <a class="nav-button" href="/">Back to Project</a>
+        <h1 class="h1">Review New Users</h1>
+        <a class="nav-button" href="project.html">Back to Project</a>
+
     </header>
 
     <p class="subtitle">Review faces captured by the live camera. Approve a face to move it into the verified folder.</p>
 
-    <div id="userList" class="user-grid">
-        <div class="empty-state">Loading captured faces...</div>
+    <!-- Verified Users Section -->
+    <div class="verified-section">
+        <h2>Verified Users</h2>
+        <div id="verifiedList" class="user-grid">
+        
+        <div class="empty-state">Loading verified users...</div>
+
+        </div>
+    </div>
+
+    <!-- Unverified Users Section -->
+    <div class="unverified-section">
+        <h2>Unverified Users (Pending Review)</h2>
+        <div id="unverifiedList" class="user-grid">
+            <div class="empty-state">Loading unverified users...</div>
+        </div>
     </div>
 
     <script>
-        async function loadNewFaces() {
-            const list = document.getElementById('userList');
-            list.innerHTML = '<div class="empty-state">Loading captured faces...</div>';
+        async function loadVerifiedUsers() {
+            const container = document.getElementById('verifiedList');
+            container.innerHTML = '<div class="empty-state">Loading verified users...</div>';
             try {
-                const response = await fetch('/api/new-users');
+                const response = await fetch('/api/verified-users');
                 const data = await response.json();
                 if (!data.items || data.items.length === 0) {
-                    list.innerHTML = '<div class="empty-state">No new faces were captured yet.</div>';
+                    container.innerHTML = '<div class="empty-state">No verified users yet.</div>';
                     return;
                 }
-                list.innerHTML = '';
+                container.innerHTML = '';
                 data.items.forEach(filename => {
                     const card = document.createElement('div');
-                    card.className = 'user-card';
+                    card.className = 'user-card verified';
                     card.innerHTML = `
-                        <img src="/images/unknown/${encodeURIComponent(filename)}" alt="${filename}">
+                        <img src="/images/verified/${encodeURIComponent(filename)}" alt="${filename}">
+                        <div class="user-card-content">
+                            <div class="user-name">${filename}</div>
+                            <button class="remove-button" onclick="removeVerified('${encodeURIComponent(filename)}')">Remove</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (error) {
+                container.innerHTML = `<div class="empty-state">Failed to load verified users: ${error.message}</div>`;
+            }
+        }
+
+        async function loadUnverifiedUsers() {
+            const container = document.getElementById('unverifiedList');
+            container.innerHTML = '<div class="empty-state">Loading unverified users...</div>';
+            try {
+                const response = await fetch('/api/unverified-users');
+                const data = await response.json();
+                if (!data.items || data.items.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No unverified users pending review.</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.items.forEach(filename => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card unverified';
+                    card.innerHTML = `
+                        <img src="/images/unverified/${encodeURIComponent(filename)}" alt="${filename}">
                         <div class="user-card-content">
                             <div class="user-name">${filename}</div>
                             <button class="approve-button" onclick="approveFace('${encodeURIComponent(filename)}')">Approve</button>
+                            <button class="reject-button" onclick="rejectFace('${encodeURIComponent(filename)}')">Reject</button>
                         </div>
                     `;
-                    list.appendChild(card);
+                    container.appendChild(card);
                 });
             } catch (error) {
-                list.innerHTML = `<div class="empty-state">Failed to load faces: ${error.message}</div>`;
+                container.innerHTML = `<div class="empty-state">Failed to load unverified users: ${error.message}</div>`;
             }
         }
 
@@ -57,7 +101,9 @@
                 });
                 const result = await response.json();
                 if (result.success) {
-                    loadNewFaces();
+                    // Reload both sections
+                    loadUnverifiedUsers();
+                    loadVerifiedUsers();
                 } else {
                     alert('Approve failed: ' + (result.error || 'unknown error'));
                 }
@@ -66,7 +112,60 @@
             }
         }
 
-        window.addEventListener('DOMContentLoaded', loadNewFaces);
+        async function rejectFace(encodedFilename) {
+            const filename = decodeURIComponent(encodedFilename);
+            if (confirm(`Are you sure you want to reject ${filename}?`)) {
+                try {
+                    const response = await fetch('/api/reject-user', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ filename })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        loadUnverifiedUsers();
+                    } else {
+                        alert('Reject failed: ' + (result.error || 'unknown error'));
+                    }
+                } catch (error) {
+                    alert('Reject failed: ' + error.message);
+                }
+            }
+        }
+  await fetch('/api/approve-users',{
+                method:'POST',
+                headers:{'Content-Type' : 'application/json'},
+                body:JSON.stringify({filename:subDocu/knownfolder/approved})
+
+            })
+        async function removeVerified(encodedFilename) {
+            const filename = decodeURIComponent(encodedFilename);
+            if (confirm(`Are you sure you want to remove ${filename} from verified users?`)) {
+                try {
+                    const response = await fetch('/api/remove-verified', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ filename })
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        loadVerifiedUsers();
+                    } else {
+                        alert('Remove failed: ' + (result.error || 'unknown error'));
+                    }
+                } catch (error) {
+                    alert('Remove failed: ' + error.message);
+                }
+            }
+        }
+
+        // Load both sections when page loads
+        window.addEventListener('DOMContentLoaded', () => {
+            loadVerifiedUsers();
+            loadUnverifiedUsers();
+         
+     
+        });
     </script>
 </body>
 </html>

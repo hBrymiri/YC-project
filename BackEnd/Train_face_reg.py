@@ -1,20 +1,26 @@
 import cv2
 import mediapipe as mp
+from mediapipe.tasks import python
+from mediapipe.tasks.python import vision
 import os
-from datetime import datetime
+from datetime import date, datetime
+
+from sympy import srepr, sring
 import audioReg
 import shutil
 import numpy as np
 # Enrollment (add new person) settings
-from pathlib import Path                 # number of images to capture for angles
+from pathlib import Path
+
+from flask import app, jsonify, request         # number of images to capture for angles
 ENROLL_INTERVAL_SEC = 0.25        # time between shots
 ENROLL_MIN_FACE_SIZE = 80         # ignore tiny faces during enroll
-KNOWN_DIR = Path("SubDocu/KnownFolder")
-UNKNOWN_DIR = Path("SubDocu/UnknownFolder")
+KNOWN_DIR = Path("BackEnd/SubDocu/KnownFolder")
+UNKNOWN_DIR = Path("BackEnd/SubDocu/UnknownFolder")
 ENROLL_SHOTS = 5
 pending_unknown_face = None       # will store last unknown face bbox/emb
 
-person_dir = UNKNOWN_DIR("unknowns")  # Define person_dir
+person_dir = UNKNOWN_DIR / "unknowns"  # Define person_dir
 name = person_dir
 
 
@@ -35,7 +41,7 @@ class UnknownFaceCapture:
 
 class Face_reg: # Face recognition and unknown face capture
     def __init__(self): # Initialize the face detector and unknown face capture
-        self.face_detector = mp.solutions.face_detection.FaceDetection(
+        self.face_detector = mp.solutions.face_detection.FaceDetection( # type: ignore
             model_selection=0,
             min_detection_confidence=0.5
         )
@@ -58,22 +64,36 @@ class Face_reg: # Face recognition and unknown face capture
         last=0
         
         def liten_for_known_voice(know_name):
-            r = sr.Recognizer()
-            with sr.Microphone() as source:
+            r = srepr.Recognizer() # type: ignore
+            with sring.Microphone() as source:
                 print(f"listening..")
-                audio = audioReg.Listen(source)
+                audio = audioReg.Listen(source) # type: ignore
                 
                 try:
                     text = r.recognize_google(audio).lower()
                     print(f"confirmed {know_name} is known")
                     
-                    for names in known_names:
+                    for names in know_name:
                         if names.lower() in text:
                             print(f"confirmed {know_name} is known")
                             return know_name
                 except Exception as e:
                     print(f"Error recognizing voice: {e}")
                 
+@app.route('/api/approve-users', methods=['POST']) # type: ignore
+def api_approved_user():
+    data = request.get_json() or {}
+    filename = date.get('/BackEnd/subDocu/knownfolder/approved') #type: ignore
+    APPROVED_DIR = KNOWN_DIR / "approved" / filename
+    if not filename:
+        return jsonify({'error': 'filename required'}), 400
+    src = UNKNOWN_DIR / filename
+    if not src.exists():
+        return jsonify({'error': 'file not found'}), 404
+    APPROVED_DIR.mkdir(parents=True, exist_ok=True)
+    dest = APPROVED_DIR / filename
+    src.rename(dest)
+    return jsonify({'success': True})
     
         
     

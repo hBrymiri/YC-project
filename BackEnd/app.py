@@ -13,11 +13,6 @@ base_dir = os.path.dirname(os.path.abspath(__file__)) # Get the base directory o
 if not os.path.isdir(base_dir):
     raise ImportError("BackEnd package not found.")
 
-base_dir = os.path.dirname(os.path.abspath(__file__)) # Get the base directory of the current file
-# Check if the BackEnd package is correctly structured
-if not os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'BackEnd')):
-    raise ImportError("BackEnd package not found.")
-
 app = Flask(__name__, static_folder='../frontEnd', static_url_path='/')
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -25,7 +20,9 @@ UNKNOWN_DIR = PROJECT_ROOT / 'SubDocu' / 'UnknownFolder'
 KNOWN_DIR = PROJECT_ROOT / 'SubDocu' / 'KnownFolder'
 APPROVED_DIR = KNOWN_DIR / 'Approved'
 
-@app.route('/')
+@app.route('/', methods=['GET'])
+@app.route('/project.html', methods=['GET'])
+@app.route('/cameraRun.py', methods=['GET'])
 def index():
     return app.send_static_file('project.html')
 
@@ -35,7 +32,7 @@ def new_users():
 
 @app.route('/start-camera', methods=['POST'])
 def start_camera():
-    script_path = os.path.join(os.path.dirname(__file__), '..', 'came_run.py')
+    script_path = os.path.join(os.path.dirname(__file__), 'cameraRUn.py')
     subprocess.Popen(["python3", script_path])
     return jsonify({'message': 'Camera started successfully'})
 

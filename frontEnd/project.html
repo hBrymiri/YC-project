@@ -12,26 +12,47 @@
     <h1 class ="h1">Raven</h1>
 
     <div class="top-bar">
-        <button class="camera" id="cameraBtn">Access Webcam</button>
+        <button class="nav-button start-camera" type="button">Start Camera</button>
         <a class="nav-button" href="/new-users">Review New Users</a>
     </div>
+
+    <div id="cameraStatus" class="status"></div>
+    <div id="verifiedContent"></div>
 
     <script>
         async function startCamera() {
             try {
+                console.log('startCamera() called');
                 const response = await fetch('/start-camera', { method: 'POST' });
+                if (!response.ok) {
+                    const text = await response.text();
+                    throw new Error(`${response.status} ${response.statusText}: ${text}`);
+                }
                 const data = await response.json();
-                console.log(data.message);
+                console.log('Backend response:', data.message);
+                document.getElementById('cameraStatus').textContent = data.message;
             } catch (error) {
                 console.error('Error:', error);
+                document.getElementById('cameraStatus').textContent = `Camera error: ${error.message}`;
             }
         }
 
+        document.querySelectorAll('.start-camera').forEach(el => {
+            el.addEventListener('click', startCamera);
+        });
+
         async function loadVerifiedFaces() {
             const container = document.getElementById('verifiedContent');
+            if (!container) {
+                console.error('Verified content container not found');
+                return;
+            }
             container.innerHTML = '<div class="empty-state">Loading verified faces...</div>';
             try {
                 const response = await fetch('/api/verified-users');
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
                 const data = await response.json();
                 if (!data.items || data.items.length === 0) {
                     container.innerHTML = '<div class="empty-state">No verified faces yet.</div>';
@@ -41,7 +62,7 @@
                 data.items.forEach(filename => {
                     const item = document.createElement('div');
                     item.className = 'verified-item';
-                    item.innerHTML = `\n                        <img src="/images/verified/${encodeURIComponent(filename)}" alt="${filename}">\n                        <span>${filename}</span>\n                    `;
+                    item.innerHTML = `\n <img src="/images/verified/${encodeURIComponent(filename)}" alt="${filename}">\n                    <span>${filename}</span>\n `;
                     container.appendChild(item);
                 });
             } catch (error) {
@@ -49,31 +70,15 @@
             }
         }
 
-        document.getElementById('cameraBtn').addEventListener('click', startCamera);
         window.addEventListener('DOMContentLoaded', loadVerifiedFaces);
-    </script>
 
-    <div class = "verified">
-        <button class ="button1">Verified People</button>
-        <div class="content" id="verifiedContent">
-            <div class="empty-state">Loading verified faces...</div>
-        </div>
-    </div>
-
-
-    <div class = "unverified">
-        <button class ="button2">Unverified People</button>
-        <div class="content2">
-            <a href="">A</a>
-            <a href="">B</a>
-            <a href="">C</a>
-        </div>
-    </div>
+  </script>
 
  
     <br>
 
     <textarea class = "text" rows="1" placeholder="bruh"></textarea>
+     
 
 </body>
 </html>

@@ -131,7 +131,7 @@ def recognize_face(emb: np.ndarray):
     return None, best_sim
 
 def record_unknown_video(out_path: Path, frame_size, fps=20, seconds=4):
-    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+    fourcc = getattr(cv2, "VideoWriter_fourcc")(*"mp4v")
     vw = cv2.VideoWriter(str(out_path), fourcc, fps, frame_size)
     if not vw.isOpened():
         print("[WARN] Could not open video writer.")
@@ -173,39 +173,40 @@ while True:
                 mac_say(name)
                 last_spoken_at[name] = t
         else:
-            
             label = f"Unknown ({sim:.2f})" # unknown face
             t = time.time()
-            if pictures_taken<MAX_PICTURES: # limit number of pictures taken
-                cv2.writte(str(img_path), frame)
-                pictures_taken+=1
-            if  t - last_unknown_saved_at > UNKNOWN_COOLDOWN_SEC:# save unknown with cooldown
-                date_dir, ts = now_stamp()
-                out_dir = UNKNOWN_DIR / date_dir
+            date_dir, ts = now_stamp()
+            preview_dir = UNKNOWN_DIR / date_dir
+            if pictures_taken < MAX_PICTURES: # limit number of pictures taken
+                ensure_dir(preview_dir)
+                preview_path = preview_dir / f"{ts}_unknown_preview.jpg"
+                cv2.imwrite(str(preview_path), frame)
+                pictures_taken += 1
+            if t - last_unknown_saved_at > UNKNOWN_COOLDOWN_SEC: # save unknown with cooldown
+                out_dir = preview_dir
                 ensure_dir(out_dir)
 
                 # Save full frame photo
                 img_path = out_dir / f"{ts}_unknown.jpg"
                 cv2.imwrite(str(img_path), frame)
-                
 
                 # Save face crop too (helpful for review)
-                face_crop = frame[max(0,y1):max(0,y2), max(0,x1):max(0,x2)]
+                face_crop = frame[max(0, y1):max(0, y2), max(0, x1):max(0, x2)]
                 crop_path = out_dir / f"{ts}_face.jpg"
                 if face_crop.size > 0:
                     cv2.imwrite(str(crop_path), face_crop)
 
                 # Record short clip
                 h0, w0 = frame.shape[:2]
-                if vid_taken>0:
-                    MAX_VidLen =min(UNKNOWN_VIDEO_SECONDS,vid_taken)
+                if vid_taken > 0:
+                    MAX_VidLen = min(UNKNOWN_VIDEO_SECONDS, vid_taken)
                 vid_path = out_dir / f"{ts}_unknown.mp4"
-                
+
                 record_unknown_video(vid_path, frame_size=(w0, h0), fps=UNKNOWN_FPS, seconds=MAX_VidLen)
-                vid_taken+=MAX_VidLen
-            else:
-                print(f"[SAVED] Unknown -> {img_path.name}, {vid_path.name}")
+                vid_taken += MAX_VidLen
                 last_unknown_saved_at = t
+            else:
+                print(f"[COOLDOWN] Unknown not saved yet. Dir -> {preview_dir}")
 
         # draw box + label
         cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0) if name else (0, 0, 255), 2)
@@ -215,5 +216,33 @@ while True:
     if cv2.waitKey(1) & 0xFF == ord("q"):
         break
 
+
+def start_camera_and_record():
+    """Start camera and record video to output.avi"""
+    cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        raise RuntimeError("Cannot open camera")
+    
+    fourcc = cv2.VideoWriter_fourcc(*'XVID') # type: ignore
+    out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640, 480))
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        out.write(frame)
+        cv2.imshow('Recording', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+
+def low_battery_check(battery_status):
+    """Check battery and disable camera if too low"""
+    if battery_status <= "20%":
+        print("Battery too low, camera is disabled.")
+        return
+
+    
+
 cap.release()
 cv2.destroyAllWindows()
+
