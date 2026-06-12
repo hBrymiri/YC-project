@@ -1,8 +1,11 @@
 import sys
 import os
 from pathlib import Path
+from time import time
 from flask import Flask, jsonify, request, send_from_directory
 import subprocess
+from datetime import timedelta
+import sqlite3
 #app.py connects the camera/input, the recognition logic, and the database, then runs the app.
 
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -71,14 +74,35 @@ def unknown_image(filename):
 def verified_image(filename):
     return send_from_directory(str(APPROVED_DIR), filename)
 
+@app.route("/camera", methods=["POST"])
+def camera():
+    action = request.form.get("cameraButton")
+    if action == "Stop Camera":
+        return "Camera Stopped"
+    return "No Action Taken"
+
+@app.route("/loadUnverifiedUsers", methods=["POST"])
+def load_unverified_users():
+    status = "Pending"
+    # this is where the unverified users will come from
+    TheRavenDb()
+    return jsonify({"status": status})
+
+def TheRavenDb():
+    # and this is where the unverified users will be stored.
+    conn = sqlite3.connect('/Users/hbrymiri/YC project/BackEnd/storage.db')
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    row = cursor.fetchone()
+    print(row[0])
+     
+    return conn
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-    
-@app.route("/camera",methods=["POST"]) # type: ignore
-def camera(Start_camera,Stop_camera):
-    action=request.form.get("cameraButton")
-    if action=="Stop Camera":
-      Stop_camera()
-    return "Camera Stopped"
-    return " No Action Takken"
-    
+
+
+
+
+
+
