@@ -95,8 +95,10 @@ def TheRavenDb():
     cursor = conn.cursor()
     row = cursor.fetchone()
     print(row[0])
-     
     return conn
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

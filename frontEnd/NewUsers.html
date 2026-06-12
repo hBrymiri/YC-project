@@ -21,6 +21,31 @@
         <div id="verifiedList" class="user-grid">
         
         <div class="empty-state">Loading verified users...</div>
+        const container =document.getElementById('verifiedList');
+        fetch('api/verfifiedList')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.items || data.items.length === 0) {
+                    container.innerHTML = '<div class="empty-state">No verified users yet.</div>';
+                    return;
+                }
+                container.innerHTML = '';
+                data.items.forEach(filename => {
+                    const card = document.createElement('div');
+                    card.className = 'user-card verified';
+                    card.innerHTML = `
+                        <img src="/images/verified/${encodeURIComponent(filename)}" alt="${filename}">
+                        <div class="user-card-content">
+                            <div class="user-name">${filename}</div>
+                            <button class="remove-button" onclick="removeVerified('${encodeURIComponent(filename)}')">Remove</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+            })
+            .catch(error => {
+                container.innerHTML = `<div class="empty-state">Failed to load verified users: ${error.message}</div>`;
+            });
 
         </div>
     </div>
@@ -29,7 +54,34 @@
     <div class="unverified-section">
         <h2>Unverified Users (Pending Review)</h2>
         <div id="unverifiedList" class="user-grid">
+            
             <div class="empty-state">Loading unverified users...</div>
+            const container = document.getElementById('unverifiedList');
+            fetch('/api/unverified-users')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.items || data.items.length === 0) {
+                        container.innerHTML = '<div class="empty-state">No unverified users pending review.</div>';
+                        return;
+                    }
+                    container.innerHTML = '';
+                    data.items.forEach(filename => {
+                        const card = document.createElement('div');
+                        card.className = 'user-card unverified';
+                        card.innerHTML = `
+                            <img src="/images/unverified/${encodeURIComponent(filename)}" alt="${filename}">
+                            <div class="user-card-content">
+                                <div class="user-name">${filename}</div>
+                                <button class="approve-button" onclick="approveFace('${encodeURIComponent(filename)}')">Approve</button>
+                                <button class="reject-button" onclick="rejectFace('${encodeURIComponent(filename)}')">Reject</button>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    container.innerHTML = `<div class="empty-state">Failed to load unverified users: ${error.message}</div>`;
+                });
         </div>
     </div>
 
